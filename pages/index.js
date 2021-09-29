@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import Head from 'next/head'
 import Header from '../components/Header'
 import Button from "@material-tailwind/react/Button"
@@ -5,11 +6,69 @@ import Icon from "@material-tailwind/react/Icon"
 import Image from 'next/image'
 import { getSession, useSession } from 'next-auth/client'
 import Login from '../components/Login'
+import Modal from '@material-tailwind/react/Modal'
+import ModalBody from '@material-tailwind/react/ModalBody'
+import ModalFooter from '@material-tailwind/react/ModalFooter'
+import { db } from '../firebase'
+import { doc, setDoc, Timestamp, addDoc, collection, onSnapshot } from "firebase/firestore";
+import firebase from 'firebase/app'
+
 
 export default function Home() {
   // const [session] = useSession()
+  const [showModal, setShowModal] = useState(false)
+  const [input, setInput] = useState('')
+
+
+
+  const createDocument = async () => {
+    if (!input) return
+
+    await addDoc(collection(db, "docs"), {
+      fileName: input,
+      timestamp: Timestamp.fromDate(new Date()),
+    });
+
+    setInput('')
+    setShowModal(false)
+  }
+
 
   // if (!session) return <Login />
+
+  const modal = (
+    <Modal
+      size='sm'
+      active={showModal}
+      toggler={() => setShowModal(false)}
+    >
+
+      <ModalBody>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          type='text'
+          className='outline-none w-full'
+          placeholder='Enter name of document...'
+          onKeyDown={(e) => e.key === 'Enter' && createDocument()}
+        />
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          color='blue'
+          buttonType='link'
+          onClick={(e) => setShowModal(false)}
+          ripple='dark'
+        >
+          Cancel
+        </Button>
+        <Button color='blue' onClick={createDocument} ripple='light'>
+          Create
+        </Button>
+      </ModalFooter>
+
+    </Modal>
+  )
 
 
 
@@ -21,6 +80,8 @@ export default function Home() {
       </Head>
 
       <Header />
+
+      {modal}
 
       <section className='bg-[#F8F9FA] pb-10 px-10'>
         <div className='max-w-3xl mx-auto'>
@@ -38,7 +99,7 @@ export default function Home() {
             </Button>
           </div>
           <div>
-            <div className='relative h-52 w-40 border-2 cursor-pointer hover:border-blue-700'>
+            <div onClick={() => setShowModal(true)} className='relative h-52 w-40 border-2 cursor-pointer hover:border-blue-700'>
               <Image
                 src='https://links.papareact.com/pju'
                 layout='fill'
@@ -62,3 +123,14 @@ export default function Home() {
     </div>
   )
 }
+
+
+// export async function getServerSideProps(context) {
+//   const session = await getSession(context)
+
+//   return {
+//     propps: {
+//       session,
+//     }
+//   }
+// }

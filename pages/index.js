@@ -11,8 +11,8 @@ import ModalBody from '@material-tailwind/react/ModalBody'
 import ModalFooter from '@material-tailwind/react/ModalFooter'
 import { db } from '../firebase'
 import { doc, setDoc, Timestamp, addDoc, collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import firebase from 'firebase/app'
 import DocumentRow from '../components/DocumentRow'
+import slug from '../utils/slug'
 
 
 export default function Home() {
@@ -20,6 +20,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
   const [list, setList] = useState([])
+  const [idsList, setIdsList] = useState([])
 
 
   const getDocuments = () => {
@@ -33,6 +34,8 @@ export default function Home() {
     })
   }
 
+  console.log(idsList)
+
   useEffect(() => {
     getDocuments()
   }, [])
@@ -42,7 +45,9 @@ export default function Home() {
 
     await addDoc(collection(db, "docs"), {
       fileName: input,
+      slug: slug(input),
       timestamp: Timestamp.fromDate(new Date()),
+
     })
 
     setInput('')
@@ -134,10 +139,10 @@ export default function Home() {
             <Icon name='folder' size='3xl' color='gray' />
           </div>
 
-          {list.map((doc) =>
+          {list.map((doc, i) =>
             <DocumentRow
-              key={doc.id}
-              id={doc.id}
+              key={i}
+              id={doc.slug}
               fileName={doc.fileName}
               date={doc.timestamp}
             />

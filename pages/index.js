@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Header from '../components/Header'
 import Button from "@material-tailwind/react/Button"
@@ -10,16 +10,32 @@ import Modal from '@material-tailwind/react/Modal'
 import ModalBody from '@material-tailwind/react/ModalBody'
 import ModalFooter from '@material-tailwind/react/ModalFooter'
 import { db } from '../firebase'
-import { doc, setDoc, Timestamp, addDoc, collection, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, Timestamp, addDoc, collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import firebase from 'firebase/app'
+import DocumentRow from '../components/DocumentRow'
 
 
 export default function Home() {
   // const [session] = useSession()
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
+  const [list, setList] = useState([])
 
 
+  const getDocuments = () => {
+    const q = query(collection(db, "docs"), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const documents = [];
+      querySnapshot.forEach((doc) => {
+        documents.push(doc.data());
+        setList(documents)
+      })
+    })
+  }
+
+  useEffect(() => {
+    getDocuments()
+  }, [])
 
   const createDocument = async () => {
     if (!input) return
@@ -27,7 +43,7 @@ export default function Home() {
     await addDoc(collection(db, "docs"), {
       fileName: input,
       timestamp: Timestamp.fromDate(new Date()),
-    });
+    })
 
     setInput('')
     setShowModal(false)
@@ -117,7 +133,17 @@ export default function Home() {
             <p className='mr-12'>Date Created</p>
             <Icon name='folder' size='3xl' color='gray' />
           </div>
+
+          {list.map((doc) =>
+            <DocumentRow
+              key={doc.id}
+              id={doc.id}
+              fileName={doc.fileName}
+              date={doc.timestamp}
+            />
+          )}
         </div>
+
       </section>
 
     </div>
